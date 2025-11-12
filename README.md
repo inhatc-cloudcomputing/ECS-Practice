@@ -27,32 +27,30 @@ vi Dockerfile
 ```dockerfile
 FROM ubuntu:24.04
 
-# Update installed packages and install Nginx
-RUN apt update && \
-    apt install -y nginx && \
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends nginx && \
     rm -rf /var/lib/apt/lists/*
 
-# Write hello world message
-RUN echo "<h1>Hello World! $(hostname -f)</h1>" | sudo tee /var/www/html/index.html
-
-# Configure Nginx
-RUN echo 'mkdir -p /var/run/nginx' >> /root/run_nginx.sh && \
-    echo 'nginx -g "daemon off;"' >> /root/run_nginx.sh && \
-    chmod 755 /root/run_nginx.sh
+# Entry point script with shebang
+RUN printf '#!/usr/bin/env bash\nset -e\nmkdir -p /var/www/html\necho "<h1>Hello World! $(hostname -f)</h1>" > /var/www/html/index.html\nexec nginx -g "daemon off;"\n' > /docker-entrypoint.sh \
+    && chmod +x /docker-entrypoint.sh
 
 EXPOSE 80
 
-CMD ["/root/run_nginx.sh"]
+ENTRYPOINT ["/docker-entrypoint.sh"]
+
 ```
 ```bash
-docker build -t hello-world .
-docker images --filter reference=hello-world
-docker run -t -i -p 80:80 hello-world
+sudo docker build -t hello-world .
+sudo docker images --filter reference=hello-world
+sudo docker run -t -i -p 80:80 hello-world
 ```
 
 #### ECR
 ```bash
-aws ecr get-login-password --region {리전} | docker login --username AWS --password-stdin {리포지토리 URI}
-docker tag hello-world {리포지토리 URI}
-docker push {리포지토리 URI}
+aws ecr get-login-password --region {리전} | sudo docker login --username AWS --password-stdin {리포지토리 URI}
+sudo docker tag hello-world {리포지토리 URI}
+sudo docker push {리포지토리 URI}
 ```
