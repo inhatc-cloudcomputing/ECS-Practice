@@ -10,7 +10,7 @@ const fetcher = () =>
     }
   });
 
-export default function Home() {
+export default async function Home() {
   const result = await fetcher();
 
   return (
